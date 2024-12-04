@@ -12,73 +12,8 @@ from OpenGL.GLU import *
 
 heightG = 0
 widthG = 0
-
-def PointNoise(width, height, pixels):
-    numPoints = random.randint(50, 100)
-    for _ in range(numPoints):
-        i = random.randint(0, height - 1)
-        j = random.randint(0, width - 1)
-
-        r = random.randint(0, 255)
-        g = random.randint(0, 255)
-        b = random.randint(0, 255)
-
-        pixels[(3 * width * i) + j * 3] = r
-        pixels[(3 * width * i) + j * 3 + 1] = g
-        pixels[(3 * width * i) + j * 3 + 2] = b
-
-def LineNoise(width, height, pixels):
-    numLines = random.randint(2, 5)
-    
-    lines = []
-
-    for _ in range(numLines):
-        x1 = random.randint(-width, width - 1) / width
-        y1 = random.randint(-width, height - 1) / height
-        x2 = random.randint(-width, width - 1) / width 
-        y2 = random.randint(-width, height - 1) / height
-
-        r = random.randint(0, 255)
-        g = random.randint(0, 255)
-        b = random.randint(0, 255)
-
-        lines.append([x1,y1, x2, y2, r,g,b])
-
-    glLineWidth(1.0)
-    for line in lines:
-        glBegin(GL_LINES)
-        glColor3f(line[4] / 255.0, line[5] / 255.0, line[6] / 255.0)
-        glVertex2f(line[0], line[1])
-        glVertex2f(line[2], line[3])
-        glEnd()
-
-    glReadPixels(0,0,width,height,GL_RGB, GL_UNSIGNED_BYTE, pixels)
-
-def CircleNoise(width, height, pixels):
-    numCircles = random.randint(2, 5)
-    circles = []
-    for _ in range(numCircles):
-        centerX = random.randint(-width, width - 1) / width
-        centerY = random.randint(-width, width - 1) / width
-        radius = random.randint(0, 100)/ 1000
-        
-        r = random.randint(0, 255)
-        g = random.randint(0, 255)
-        b = random.randint(0, 255)
-
-        circles.append([centerX,centerY, radius,r,g,b])
-    glLineWidth(1.0)
-    for circle in circles:
-        numSegments = 30
-        glBegin(GL_LINE_LOOP) 
-        glColor3f(circle[3] / 255.0, circle[4] / 255.0, circle[5] / 255.0)
-        for i in range(numSegments):
-            theta = 2.0 * 3.1415926 * i / numSegments
-            x = circle[0] + circle[2] * math.cos(theta)
-            y = circle[1] + circle[2] * math.sin(theta)
-            glVertex2f(x, y)
-        glEnd()
-        glReadPixels(0,0,width,height,GL_RGB, GL_UNSIGNED_BYTE, pixels)
+# Во сколько уменьшать\увеличивать изображение
+SCALE = 2
 
 def nearestNeighborScale(width, height, pixels, k):
     global changingH
@@ -177,14 +112,12 @@ def bicubicScale(width, height, pixels, k):
                         weight_y = bicubicWeight(yf - yf - j)
                         # Аккумулируем значение по формуле
                         val += pixels[(3 * widthG * yInd) + xInd * 3 + c] * weight_x * weight_y
-                # Следим за тем, чтобы не выйти за предел 0 - 255
                 val = max(0, min(val, 255))
                 newPixels[(3 * newWidth * y) + x * 3 + c] = val
 
-    
+    # Подготваливаемся к дальнейшей отрисовке
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     glReadPixels(0,0,widthG,heightG,GL_RGB, GL_UNSIGNED_BYTE, pixels)
-
     for y in range(newHeight):
         for x in range(newWidth):
             oldIndex = (3 * widthG * y) + x * 3
@@ -197,13 +130,6 @@ def bicubicScale(width, height, pixels, k):
     changingH = newHeight
 
     
-
-
-
-
-
-
-
 def main():
     global widthG
     global heightG
@@ -213,8 +139,8 @@ def main():
     image = pyglet.image.load('C.jpg', file=image_stream).get_image_data()
     heightG = image.height
     widthG = image.width
-    changingH = 3
-    changingW = 3
+    changingH = heightG
+    changingW = widthG
 
     data = image.get_data('RGB', image.width * 3)
     pixels = (GLubyte * len(data)) (*data)
@@ -224,12 +150,8 @@ def main():
     glTranslatef(0,0, -1) # Камера
 
     while True:
-
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         glDrawPixels(widthG, heightG, GL_RGB, GL_UNSIGNED_BYTE, pixels)
-
-        
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -240,38 +162,14 @@ def main():
                     changingH = heightG
                     changingW = widthG
                 if event.key == pygame.K_2:
-                    nearestNeighborScale(changingW,changingH,pixels,0.5)
-
-                    
+                    nearestNeighborScale(changingW,changingH,pixels,1/SCALE)
                 if event.key == pygame.K_3:
-                   nearestNeighborScale(changingW,changingH,pixels,100)
+                   nearestNeighborScale(changingW,changingH,pixels,SCALE)
                 if event.key == pygame.K_4:
-                    bicubicScale(changingW,changingH,pixels,0.5)
+                    bicubicScale(changingW,changingH,pixels,1/SCALE)
                 if event.key == pygame.K_5:
-                   bicubicScale(changingW,changingH,pixels,25)
-                if event.key == pygame.K_6:
-                   medianFilter(widthG,heightG,pixels,2)
-                if event.key == pygame.K_7:
-                   medianFilter(widthG,heightG,pixels,3)
-                if event.key == pygame.K_KP1:
-                    rezFilter(widthG,heightG,pixels,2)
-                if event.key == pygame.K_KP2:
-                    rezFilter(widthG,heightG,pixels,4)
-                if event.key == pygame.K_KP3:
-                    rezFilter(widthG,heightG,pixels,6)
-                if event.key == pygame.K_KP4:
-                    PointNoise(widthG,heightG,pixels)
-                if event.key == pygame.K_KP5:
-                    LineNoise(widthG,heightG,pixels)
-                if event.key == pygame.K_KP6:
-                    CircleNoise(widthG,heightG,pixels)
-                if event.key == pygame.K_KP7:
-                    Aquarel(widthG,heightG,pixels)
-
-
-        glDrawPixels(widthG, heightG, GL_RGB, GL_UNSIGNED_BYTE, pixels)
-
-                                     
+                   bicubicScale(changingW,changingH,pixels,SCALE)
+        glDrawPixels(widthG, heightG, GL_RGB, GL_UNSIGNED_BYTE, pixels)                 
         pygame.display.flip()
         pygame.time.wait(12)
 main() 
