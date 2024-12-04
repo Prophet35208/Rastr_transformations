@@ -80,7 +80,7 @@ def CircleNoise(width, height, pixels):
         glReadPixels(0,0,width,height,GL_RGB, GL_UNSIGNED_BYTE, pixels)
 
 def ravnomFilter(width, height, pixels, mod = 1):
-    # Выполним реализацию 3 апертур. Они будут равномерными, размерами 3, 5 и 7
+    # Выполним реализацию 3 апертур. Они будут равномерными; размерами 3, 5 и 7
     kernelSize = 3
     if (mod == 1):
         kernelSize = 3  
@@ -118,7 +118,7 @@ def ravnomFilter(width, height, pixels, mod = 1):
             pixels[index + 1] = meanG
             pixels[index + 2] = meanB
 
-
+# Медианный фильтр
 def medianFilter(width, height, pixels, mod = 1):
     kernelSize = 3
     if (mod == 1):
@@ -159,10 +159,9 @@ def medianFilter(width, height, pixels, mod = 1):
             pixels[index + 1] = medG
             pixels[index + 2] = medB
 
-
+# Фильтр резкости
 def rezFilter(width, height, pixels, k = 2):
      # Реализуем функцию относительно параметра k, после чего протестируем при разных значениях k
-
     kernel = [-k/8, -k/8, -k/8], [-k/8, k+1, -k/8], [-k/8, -k/8, -k/8]
 
     for y in range(height):
@@ -189,7 +188,7 @@ def rezFilter(width, height, pixels, k = 2):
             pixels[index + 1] = int(np.clip(pixels[index + 1] +  sharpenG, 0, 255))
             pixels[index + 2] = int(np.clip(pixels[index + 2] + sharpenB, 0, 255))
 
-
+# Эффект акварели - в начале применяем сглаживание, после чего используем фильтр резкости
 def Aquarel(width, height, pixels):
     medianFilter(width, height, pixels,3)
     rezFilter(width, height, pixels,2)
@@ -229,13 +228,11 @@ def main():
                 if event.key == pygame.K_1:
                     pixels = (GLubyte * len(data)) (*data)
                 if event.key == pygame.K_2:
-                    ravnomFilter(widthG,heightG,pixels,1)
-
-                    
+                    ravnomFilter(widthG,heightG,pixels,1)         
                 if event.key == pygame.K_3:
-                   ravnomFilter(widthG,heightG,pixels,1)
+                   ravnomFilter(widthG,heightG,pixels,2)
                 if event.key == pygame.K_4:
-                    ravnomFilter(widthG,heightG,pixels,1)
+                    ravnomFilter(widthG,heightG,pixels,3)
                 if event.key == pygame.K_5:
                    medianFilter(widthG,heightG,pixels,1)
                 if event.key == pygame.K_6:
@@ -243,11 +240,11 @@ def main():
                 if event.key == pygame.K_7:
                    medianFilter(widthG,heightG,pixels,3)
                 if event.key == pygame.K_KP1:
-                    rezFilter(widthG,heightG,pixels,2)
+                    rezFilter(widthG,heightG,pixels,1)
                 if event.key == pygame.K_KP2:
-                    rezFilter(widthG,heightG,pixels,4)
+                    rezFilter(widthG,heightG,pixels,2)
                 if event.key == pygame.K_KP3:
-                    rezFilter(widthG,heightG,pixels,6)
+                    rezFilter(widthG,heightG,pixels,4)
                 if event.key == pygame.K_KP4:
                     PointNoise(widthG,heightG,pixels)
                 if event.key == pygame.K_KP5:
